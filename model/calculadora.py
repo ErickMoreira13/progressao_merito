@@ -33,12 +33,3 @@ def calcular_data_projetada(data_base: datetime, meses: int, saldo: int = 0, dia
         "tempo_efetivo_ate_ano_novo": tempo_exercicio_str,
         "tempo_em_exercicio_em_meses": tempo_exercicio_em_meses
     }
-
-# Exemplo de uso:
-data_base = datetime(2023, 9, 8)
-resultado = calcular_data_projetada(data_base, meses=18, saldo=0, dia_add=0)
-
-print("Data final:", resultado["data_final"].strftime('%Y-%m-%d'))
-print("Saldo no ano da nova data:", resultado["saldo_no_ano_novo"])
-print("Tempo efetivo até 01/01 da nova data:", resultado["tempo_efetivo_ate_ano_novo"])
-print("Tempo em exercício em meses:", resultado["tempo_em_exercicio_em_meses"])
