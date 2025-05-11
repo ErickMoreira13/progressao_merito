@@ -6,7 +6,12 @@ def iniciar_interface():
     root.title("Progressão TAE")
     root.geometry("300x200")
 
-    controlador = Controlador()
+    # Função de retorno à tela inicial (fechar a tela de resultados)
+    def voltar_a_tela_inicial(janela_resultados):
+        janela_resultados.destroy()  # Fecha apenas a janela de resultados
+
+    # Passando a função de retorno para o Controlador
+    controlador = Controlador(voltar_callback=voltar_a_tela_inicial)
 
     meses_var = tk.IntVar(value=18)
 
@@ -20,5 +25,13 @@ def iniciar_interface():
 
     botao = tk.Button(root, text="Selecionar Planilha", command=lambda: controlador.acionar_leitura_planilha(meses_var.get()))
     botao.pack(pady=20)
+
+    # Função para fechar corretamente
+    def fechar_interface():
+        root.quit()  # Encerra o loop principal do Tkinter
+        root.destroy()  # Destrói a janela para liberar os recursos
+
+    # Conectando o botão de fechar da janela ao fechamento correto
+    root.protocol("WM_DELETE_WINDOW", fechar_interface)
 
     root.mainloop()

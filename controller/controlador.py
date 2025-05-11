@@ -1,12 +1,14 @@
 from model import calculadora
-from model.planilha import processar_planilha, selecionar_arquivo, gerar_planilha_resposta
-from datetime import datetime
+from model.planilha import processar_planilha, selecionar_arquivo, mostrar_resultado_em_tabela
 import pandas as pd
 
 def formatar_data(data):
     return data.strftime("%d/%m/%Y")
 
 class Controlador:
+    def __init__(self, voltar_callback):
+        self.voltar_callback = voltar_callback
+
     def acionar_leitura_planilha(self, meses_intersticio=18):
         caminho = selecionar_arquivo()
         if not caminho:
@@ -40,5 +42,4 @@ class Controlador:
                 "TEMPO EM EXERCÍCIO EM MESES": resultado["tempo_em_exercicio_em_meses"]
             })
 
-        caminho_saida = gerar_planilha_resposta(resultados, caminho)
-        print(f"Planilha de resposta gerada: {caminho_saida}")
+        mostrar_resultado_em_tabela(resultados, caminho, self.voltar_callback)
