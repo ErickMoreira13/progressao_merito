@@ -9,7 +9,7 @@ class Controlador:
     def __init__(self, voltar_callback):
         self.voltar_callback = voltar_callback
 
-    def acionar_leitura_planilha(self, meses_intersticio=18):
+    def acionar_leitura_planilha(self, meses_intersticio=12):
         caminho = selecionar_arquivo()
         if not caminho:
             print("Nenhum arquivo selecionado.")
@@ -32,14 +32,19 @@ class Controlador:
 
             resultado = calculadora.calcular_data_projetada(data_inicio, meses=meses_intersticio)
 
-            resultados.append({
+            resultado_apd = {
                 "NOME SERVIDOR": nome,
                 "INTERSTÍCIO INÍCIO": formatar_data(data_inicio),
-                "MESES USADOS": meses_intersticio,
-                "DATA PROJETADA": formatar_data(resultado["data_final"]),
-                "SALDO NO ANO NOVO": resultado["saldo_no_ano_novo"],
-                "TEMPO EFETIVO ATÉ 01/01": resultado["tempo_efetivo_ate_ano_novo"],
+                "MESES PARA INTERSTÍCIO": meses_intersticio,
+                "DATA PROGRESSÃO": formatar_data(resultado["data_final"]),
                 "TEMPO EM EXERCÍCIO EM MESES": resultado["tempo_em_exercicio_em_meses"]
-            })
+            }
+
+            if meses_intersticio != 12:
+                            resultado_apd["SALDO"] = max(resultado["saldo"], 0)
+
+            resultados.append(resultado_apd)
+
+           
 
         mostrar_resultado_em_tabela(resultados, caminho, self.voltar_callback)

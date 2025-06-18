@@ -27,9 +27,13 @@ def calcular_data_projetada(data_base: datetime, meses: int, saldo: int = 0, dia
     # Tempo de exercício em meses
     tempo_exercicio_em_meses = tempo_exercicio.years * 12 + tempo_exercicio.months
 
-    return {
+    resultado = {
         "data_final": nova_data,
-        "saldo_no_ano_novo": saldo_formatado,
-        "tempo_efetivo_ate_ano_novo": tempo_exercicio_str,
         "tempo_em_exercicio_em_meses": tempo_exercicio_em_meses
     }
+
+    # Se meses for diferente de 12, adiciona o campo "saldo"
+    if meses != 12:
+        resultado["saldo"] = tempo_exercicio_em_meses - 12
+
+    return resultado
