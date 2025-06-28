@@ -1,5 +1,5 @@
 import pandas as pd
-from tkinter import Tk, filedialog, messagebox
+from tkinter import Canvas, Frame, Tk, filedialog, messagebox
 import unicodedata
 import os
 from tkinter import Toplevel, Button, ttk, Label, Scrollbar
@@ -49,38 +49,84 @@ def salvar_como_csv(lista_resultados, caminho_original):
 def mostrar_resultado_em_tabela(lista_resultados, caminho_original, voltar_callback):
     janela = Toplevel()
     janela.title("Resultado da Análise")
-    janela.geometry("900x500")
+    janela.geometry("1000x500")
 
-    frame = ttk.Frame(janela)
+    frame = Frame(janela)
     frame.pack(fill='both', expand=True)
 
+    canvas = Canvas(frame)
+    canvas.pack(side='left', fill='both', expand=True)
+
+    vsb = Scrollbar(frame, orient="vertical", command=canvas.yview)
+    vsb.pack(side='right', fill='y')
+
+    hsb = Scrollbar(janela, orient="horizontal", command=canvas.xview)
+    hsb.pack(side='bottom', fill='x')
+
+    canvas.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+
+    tabela_frame = Frame(canvas)
+    canvas.create_window((0, 0), window=tabela_frame, anchor='nw')
+
     colunas = list(lista_resultados[0].keys())
+    row_refs = {}
+    selected_row = {"index": None}
 
-    # Criando a barra de rolagem vertical
-    scroll_vertical = Scrollbar(frame, orient="vertical")
-    scroll_vertical.pack(side='right', fill='y')
+    def selecionar_linha(idx):
+        # Limpar linha anterior
+        if selected_row["index"] is not None:
+            for label in row_refs[selected_row["index"]]:
+                label.config(bg=label.original_bg)
 
-    # Criando a barra de rolagem horizontal
-    scroll_horizontal = Scrollbar(frame, orient="horizontal")
-    scroll_horizontal.pack(side='bottom', fill='x')
+        # Marcar nova linha
+        for label in row_refs[idx]:
+            label.config(bg="#cce5ff")
+        selected_row["index"] = idx
 
-    # Criando a Treeview (tabela)
-    tree = ttk.Treeview(frame, columns=colunas, show='headings', yscrollcommand=scroll_vertical.set, xscrollcommand=scroll_horizontal.set)
+    # Cabeçalho
+    for j, col in enumerate(colunas):
+        lbl = Label(
+            tabela_frame, text=col, bg="#cccccc",
+            anchor='center', padx=10, pady=5,
+            bd=1, relief="groove", highlightthickness=0
+        )
+        lbl.grid(row=0, column=j, sticky='nsew')
 
-    for col in colunas:
-        tree.heading(col, text=col)
-        tree.column(col, anchor='center')
+    # Dados + clique para seleção
+    for i, item in enumerate(lista_resultados, start=1):
+        row_labels = []
+        for j, col in enumerate(colunas):
+            valor = item[col]
+            cor = "white"
+            if col.upper() == "ESTÁ APTO PARA A PROGRESSÃO?":
+                if str(valor).strip().lower() == "sim":
+                    cor = "#42ff42"
+                elif str(valor).strip().lower() in ("não", "nao"):
+                    cor = "#ff4242"
 
-    for item in lista_resultados:
-        valores = [item[col] for col in colunas]
-        tree.insert('', 'end', values=valores)
+            lbl = Label(
+                tabela_frame, text=valor, bg=cor,
+                anchor='center', padx=10, pady=5,
+                bd=1, relief="groove", highlightthickness=0
+            )
+            lbl.original_bg = cor
+            lbl.grid(row=i, column=j, sticky='nsew')
 
-    tree.pack(fill='both', expand=True)
+            # Ação de clique
+            lbl.bind("<Button-1>", lambda e, idx=i: selecionar_linha(idx))
+            row_labels.append(lbl)
+        row_refs[i] = row_labels
 
-    # Associando as barras de rolagem
-    scroll_vertical.config(command=tree.yview)
-    scroll_horizontal.config(command=tree.xview)
+    for j in range(len(colunas)):
+        tabela_frame.grid_columnconfigure(j, weight=1)
 
+    # Scroll com roda do mouse
+    def on_mousewheel(event):
+        canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    canvas.bind_all("<MouseWheel>", on_mousewheel)
+
+    # Botões
     def salvar_xlsx():
         caminho = gerar_planilha_resposta(lista_resultados, caminho_original)
         messagebox.showinfo("Sucesso", f"Planilha salva em: {caminho}")
@@ -89,19 +135,15 @@ def mostrar_resultado_em_tabela(lista_resultados, caminho_original, voltar_callb
         caminho = salvar_como_csv(lista_resultados, caminho_original)
         messagebox.showinfo("Sucesso", f"Planilha CSV salva em: {caminho}")
 
-    botoes_frame = ttk.Frame(janela)
+    botoes_frame = Frame(janela)
     botoes_frame.pack(pady=10)
 
-    btn_xlsx = Button(botoes_frame, text="Salvar como Excel", command=salvar_xlsx)
-    btn_xlsx.grid(row=0, column=0, padx=5)
+    Button(botoes_frame, text="Salvar como Excel", command=salvar_xlsx).grid(row=0, column=0, padx=5)
+    Button(botoes_frame, text="Salvar como CSV", command=salvar_csv).grid(row=0, column=1, padx=5)
+    Button(botoes_frame, text="Voltar à Tela Inicial", command=lambda: [janela.destroy(), voltar_callback(janela)]).grid(row=0, column=2, padx=5)
 
-    btn_csv = Button(botoes_frame, text="Salvar como CSV", command=salvar_csv)
-    btn_csv.grid(row=0, column=1, padx=5)
+    tabela_frame.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox("all"))
 
-    btn_voltar = Button(botoes_frame, text="Voltar à Tela Inicial", command=lambda: [janela.destroy(), voltar_callback(janela)])
-    btn_voltar.grid(row=0, column=2, padx=5)
-    
     # Para fechar a janela corretamente e manter a funcionalidade de voltar
     janela.protocol("WM_DELETE_WINDOW", lambda: [janela.destroy(), voltar_callback(janela)])
-
-

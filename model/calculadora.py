@@ -27,9 +27,13 @@ def calcular_data_projetada(data_base: datetime, meses: int, saldo: int = 0, dia
     # Tempo de exercício em meses
     tempo_exercicio_em_meses = tempo_exercicio.years * 12 + tempo_exercicio.months
 
+    # Geração do alerta de progressão
+    alerta = gerar_alerta_progressao(nova_data)
+
     resultado = {
         "data_final": nova_data,
-        "tempo_em_exercicio_em_meses": tempo_exercicio_em_meses
+        "tempo_em_exercicio_em_meses": tempo_exercicio_em_meses,
+        "alerta_progressao": alerta
     }
 
     # Se meses for diferente de 12, adiciona o campo "saldo"
@@ -37,3 +41,23 @@ def calcular_data_projetada(data_base: datetime, meses: int, saldo: int = 0, dia
         resultado["saldo"] = tempo_exercicio_em_meses - 12
 
     return resultado
+
+def gerar_alerta_progressao(data_projetada: datetime):
+    hoje = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    if data_projetada >= hoje:
+        diff = relativedelta(data_projetada, hoje)
+        diferenca_meses = diff.years * 12 + diff.months + (1 if diff.days > 0 else 0)
+        if diferenca_meses > 3:
+            return ""
+        else:
+            dias = (data_projetada - hoje).days
+            if dias == 1:
+                return "Falta 1 dia para a progressão"
+            else:
+                return f"Faltam {dias} dias para a progressão"
+    else:
+        dias_passados = (hoje - data_projetada).days
+        if dias_passados == 1:
+            return "Data da progressão passou 1 dia"
+        else:
+            return f"Data da progressão passou {dias_passados} dias"
